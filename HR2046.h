@@ -3,25 +3,6 @@
 
 #define HR2046_Z_THRESHOLD 400
 
-class TouchPoint
-{
-  public:
-    TouchPoint(void) : x(0), y(0), z(0) {}
-    TouchPoint(uint16_t x, uint16_t y, uint16_t z) : x(x), y(y), z(z) {}
-
-    bool operator==(TouchPoint point)
-    {
-      return (point.x == x && point.y == y && point.z == z);
-    }
-
-    bool operator!=(TouchPoint point)
-    {
-      return (point.x != x || point.y != y || point.z != z);
-    }
-
-    uint16_t x, y, z;
-};
-
 class HR2046
 {
   public:
