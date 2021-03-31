@@ -1,15 +1,14 @@
 #include "HR2046.h"
 #include <cstdint>
 
-HR2046::HR2046(SPI* spiPort, PinName cs) : chipSelect(cs)
+HR2046::HR2046(PinName mosi, PinName miso, PinName clk, PinName cs) : spi(mosi, miso, clk), chipSelect(cs)
 {
-  this->spiPort = spiPort;
 }
 
 void HR2046::initialize(void)
 {
-  spiPort->format(8, 3);
-  spiPort->frequency(10000000);
+  spi.format(8, 3);
+  spi.frequency(10000000);
   chipSelect = 1;
 }
 
@@ -47,13 +46,13 @@ void HR2046::readData(uint16_t *x, uint16_t *y, uint16_t *z)
       - Top Left:       X: 4000  Y: 3945
       - Top Right:      X: 385   Y: 3945
       - Bottom Left:    X: 4000  Y: 305
-      - Bottom Right:   X: 385   Y: 305 
+      - Bottom Right:   X: 385   Y: 305
 
-    Rotation 3:   dY = 3615   dX = 3585
-      - Top Left:       X: 3905  Y: 95
-      - Top Right:      X: 3905  Y: 3710
-      - Bottom Left:    X: 320   Y: 95
-      - Bottom Right:   X: 320   Y: 3710
+    Rotation 3:   dY = 3624   dX = 3604
+      - Top Left:       X: 3955  Y: 191
+      - Top Right:      X: 3955  Y: 3815
+      - Bottom Left:    X: 351   Y: 191
+      - Bottom Right:   X: 351   Y: 3815
   */
   switch(rotation)
   {
@@ -70,14 +69,16 @@ void HR2046::readData(uint16_t *x, uint16_t *y, uint16_t *z)
       *y = (yraw - 305) / (3640 / 320);
       break;
     case 3:
-      *x = (xraw - 320) / (3585 / 320);
-      *y = (yraw - 95) / (3615 / 240);
+      *x = (xraw - 351) / (3604 / 320);
+      *y = (yraw - 191) / (3624 / 240);
       break;
     default:
       *x = xraw;
       *y = yraw;
       break;
   }
+
+  printf("[Info] Raw X: %d Y: %d | Point: X: %d Y: %d\n", xraw, yraw, *x, *y);
 }
 
 void HR2046::setRotation(uint8_t rot)
@@ -112,9 +113,9 @@ int16_t HR2046::bestTwoAvg(int16_t x, int16_t y, int16_t z)
 
 uint16_t HR2046::transfer16(uint8_t cmd)
 {
-  spiPort->format(16, 3);
-  int16_t data = spiPort->write(cmd);
-  spiPort->format(8, 3);
+  spi.format(16, 3);
+  int16_t data = spi.write(cmd);
+  spi.format(8, 3);
 
   return data;
 }
@@ -126,7 +127,7 @@ void HR2046::update(void)
 
   chipSelect = 0;
 
-  spiPort->write(0xB1);
+  spi.write(0xB1);
   int16_t z1 = transfer16(0xC1) >> 3;
   z = z1 + 4095;
   int16_t z2 = transfer16(0x91) >> 3;
